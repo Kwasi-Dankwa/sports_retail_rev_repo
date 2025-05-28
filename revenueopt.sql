@@ -43,3 +43,16 @@ GROUP BY b.brand
 SELECT
     (SELECT average_sale_price FROM brand_price WHERE brand = 'Adidas') -
     (SELECT average_sale_price FROM brand_price WHERE brand = 'Nike') AS price_difference_adidas_nike;
+
+-- Assessing Price Ranges --
+SELECT b.brand, count(*) as num_of_products, sum(f.revenue) as total_revenue,
+CASE WHEN listing_price < 32 THEN 'Budget'
+     WHEN listing_price >= 32 AND listing_price < 74 THEN 'Average'
+     WHEN listing_price >= 74 AND listing_price < 129 THEN 'Expensive'
+     ELSE 'Luxury' END AS price_category
+FROM finance f
+INNER JOIN brands_v2 b
+ON f.product_id = b.product_id
+WHERE b.brand IS NOT NULL
+GROUP BY brand, price_category
+ORDER BY total_revenue DESC
