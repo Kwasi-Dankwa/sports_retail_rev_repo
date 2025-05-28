@@ -56,3 +56,42 @@ ON f.product_id = b.product_id
 WHERE b.brand IS NOT NULL
 GROUP BY brand, price_category
 ORDER BY total_revenue DESC
+
+-- difference in the amount of discount offered between the brands --
+SELECT b.brand, round(AVG(f.discount), 2) * 100 AS average_discount
+FROM finance f
+INNER JOIN brands_v2 b
+ON f.product_id = b.product_id
+GROUP BY b.brand
+
+--using cte to calculate correlation-- 
+WITH CalcData AS (
+    SELECT
+        f.revenue,
+        r.reviews
+    FROM
+        finance f
+    INNER JOIN
+        reviews_v2 r ON f.product_id = r.product_id
+),
+-- using pearsons correlation coefficient formula to find correlation
+AggData AS (
+    SELECT
+        COUNT(revenue) AS N,
+        SUM(revenue) AS SumRevenue,
+        SUM(reviews) AS SumReviews,
+        SUM(revenue * reviews) AS SumRevenueReviews,
+        SUM(revenue * revenue) AS SumRevenueSq,
+        SUM(reviews * reviews) AS SumReviewsSq
+    FROM
+        CalcData
+)
+SELECT
+    (N * SumRevenueReviews - SumRevenue * SumReviews) /
+    SQRT(
+        (N * SumRevenueSq - SumRevenue * SumRevenue) *
+        (N * SumReviewsSq - SumReviews * SumReviews)
+    ) AS review_revenue_correlation
+FROM
+    AggData;
+
