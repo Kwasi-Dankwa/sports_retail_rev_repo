@@ -5,24 +5,6 @@
 delete from brands_v2
 where brands_v2.brand is null
 
---checking and deleting missing columns in finance table--
-delete
-from finance
-where finance.revenue is null
-
---delete--
-delete
-from info_v2
-where info_v2.description is null
-
---delete--
-delete
-from reviews_v2
-where reviews_v2.reviews is null
-
---delete from traffic_v3 where traffic_v3.last_visited is null--
-
-
 -- there was no need to delete prior null values since inner join automatically excludes null values from both tables--
 SELECT COUNT(*) AS total_rows,
 COUNT(info_v2.description) AS num_of_description,
@@ -45,3 +27,19 @@ inner join info_v2 i
 on b.product_id = i.product_id
 inner join reviews_v2 r
 on i.product_id = r.product_id
+
+-- How the price point of adidas and Nike differ --
+-- use cte to calculate avegrae price --
+-- extract difference from cte after grouping by brand --
+with brand_price as (
+SELECT b.brand, 
+AVG(f.listing_price) AS average_listing_price, 
+AVG(f.sale_price) AS average_sale_price
+FROM brands_v2 b
+INNER JOIN finance f ON b.product_id = f.product_id
+WHERE b.brand IN ('Adidas', 'Nike')
+GROUP BY b.brand
+)
+SELECT
+    (SELECT average_sale_price FROM brand_price WHERE brand = 'Adidas') -
+    (SELECT average_sale_price FROM brand_price WHERE brand = 'Nike') AS price_difference_adidas_nike;
