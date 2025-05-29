@@ -95,3 +95,99 @@ SELECT
 FROM
     AggData;
 
+ -- Calculating description_length, effectively flooring to the nearest 100	
+SELECT (LENGTH(i.description) / 100) * 100 AS description_length,
+    -- Cast rating to REAL for AVG, then round to 2 decimal places
+    ROUND(AVG(CAST(r.rating AS REAL)), 2) AS average_rating
+FROM info_v2 i
+INNER JOIN reviews_v2 r ON i.product_id = r.product_id
+WHERE i.description IS NOT NULL
+GROUP BY description_length -- Or use (LENGTH(i.description) / 100) * 100 here again for clarity
+ORDER BY description_length;
+
+-- identifying gaps in volume of reviews by month --  
+SELECT b.brand,
+    STRFTIME('%Y-%m', t.last_visited) AS year_month, -- Extracting Year and Month to handle multi-year data
+    COUNT(r.reviews) AS num_reviews
+FROM reviews_v2 r
+INNER JOIN traffic_v3 t ON r.product_id = t.product_id
+INNER JOIN brands_v2 b ON r.product_id = b.product_id
+WHERE b.brand IS NOT NULL
+    AND t.last_visited IS NOT NULL -- Ensure last_visited is not NULL before processing
+GROUP BY b.brand, year_month
+ORDER BY b.brand,year_month;
+	
+--finding how many stocks consists of footwear products-- 
+WITH footwear_stocks AS (
+    SELECT
+        i.description,
+        f.revenue
+    FROM info_v2 AS i
+    INNER JOIN finance AS f ON i.product_id = f.product_id
+    WHERE
+        (i.description LIKE '%shoe%'
+        OR i.description LIKE '%trainer%'
+        OR i.description LIKE '%foot%')
+        AND i.description IS NOT NULL
+),
+RankedFootwear AS (
+    SELECT
+        revenue,
+        ROW_NUMBER() OVER (ORDER BY revenue) AS rn,
+        COUNT(*) OVER () AS total_rows
+    FROM footwear_stocks
+)
+SELECT
+    COUNT(revenue) AS num_footwear_products,
+    CASE
+        WHEN total_rows % 2 = 1 THEN  -- Odd number of rows
+            (SELECT revenue FROM RankedFootwear WHERE rn = (total_rows + 1) / 2)
+        ELSE -- Even number of rows
+            (SELECT (
+                (SELECT revenue FROM RankedFootwear WHERE rn = total_rows / 2) +
+                (SELECT revenue FROM RankedFootwear WHERE rn = total_rows / 2 + 1)
+            ) / 2.0)
+    END AS median_footwear_revenue
+FROM RankedFootwear
+LIMIT 1; 
+
+-- how footwears median value differs from clothing products --
+WITH FootwearDescriptions AS (
+    SELECT i.description
+    FROM info_v2 AS i
+    WHERE
+        (i.description LIKE '%shoe%'
+        OR i.description LIKE '%trainer%'
+        OR i.description LIKE '%foot%')
+        AND i.description IS NOT NULL
+),
+ClothingProducts AS (
+    SELECT f.revenue
+    FROM info_v2 AS i
+    INNER JOIN finance AS f ON i.product_id = f.product_id
+    WHERE
+        i.description NOT IN (SELECT description FROM FootwearDescriptions)
+        AND i.description IS NOT NULL -- Ensure description is not NULL for clothing
+),
+RankedClothing AS (
+    SELECT
+        revenue,
+        ROW_NUMBER() OVER (ORDER BY revenue) AS rn,
+        COUNT(*) OVER () AS total_rows
+    FROM ClothingProducts
+)
+SELECT
+    COUNT(revenue) AS num_clothing_products,
+    CASE
+        WHEN total_rows = 0 THEN NULL -- Handling case with no clothing products
+        WHEN total_rows % 2 = 1 THEN  -- Odd number of rows
+            (SELECT revenue FROM RankedClothing WHERE rn = (total_rows + 1) / 2)
+        ELSE -- Even number of rows
+            (SELECT (
+                (SELECT revenue FROM RankedClothing WHERE rn = total_rows / 2) +
+                (SELECT revenue FROM RankedClothing WHERE rn = total_rows / 2 + 1)
+            ) / 2.0)
+    END AS median_clothing_revenue
+FROM RankedClothing
+LIMIT 1; 
+
