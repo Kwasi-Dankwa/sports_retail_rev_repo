@@ -25,6 +25,8 @@ SQL (SQLite) – Data extraction, cleaning, CTEs, joins, aggregations, and corre
 Tableau Public – Interactive dashboard creation with charts, KPIs, and filtering capabilities
 
 # 📁 Datasets Used
+[`Data Source`](https://www.kaggle.com/code/nickleejh/optimizing-online-sports-retail-revenue-using-sql/input)
+
 brands_v2: Contains product and brand info (e.g., Adidas, Nike)
 
 finance: Holds financial data such as listing price, sale price, revenue, and discount
@@ -35,7 +37,10 @@ info_v2: Includes product descriptions
 
 traffic_v3: Contains visit data for identifying consumer engagement patterns
 
-[`Data Source`](https://www.kaggle.com/code/nickleejh/optimizing-online-sports-retail-revenue-using-sql/input)
+## Data Schema
+
+![DB](images/db.png "DB diagram")
+> All datasets are related through the product_id key, allowing for integrated analysis across brand, finance, reviews, and product details.
 
 
 # 🧠 Key Insights
