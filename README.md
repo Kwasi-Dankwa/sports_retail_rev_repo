@@ -2,7 +2,7 @@
 A Data Analytics Project by Kwasi Dankwa
 
 # 📌 Overview
-This project investigates pricing strategies, discount trends, product categorization, and consumer engagement metrics for Adidas and Nike—two of the world’s leading sportswear brands for an online retail store. Through SQL data analysis and interactive Tableau visualizations, this study uncovers how these brands compete across pricing tiers, consumer reviews, and revenue performance.
+This project investigates pricing strategies, discount trends, product categorization, and consumer engagement metrics for Adidas and Nike—two of the world’s leading sportswear brands for an online retail store. Through SQL data analysis and interactive Tableau visualizations, this study uncovers how these brands compete across pricing tiers, consumer reviews to optimize revenue performance.
 
 # 📊 Key Questions Explored
 * How do the average prices of Adidas and Nike compare?
