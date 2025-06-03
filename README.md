@@ -42,6 +42,15 @@ traffic_v3: Contains visit data for identifying consumer engagement patterns
 ![DB](images/db.png "DB diagram")
 > All datasets are related through the product_id key, allowing for integrated analysis across brand, finance, reviews, and product details.
 
+## Data Cleaning Process
+To ensure consistency in product naming, I standardized the product_name field in the info_v2 table by converting all entries to uppercase. This helps avoid duplicate entries that differ only in casing and supports consistent labeling in visualizations.
+
+<pre lang="markdown"> ``` 
+  -- Updating `info_v2` table to have product_name values in uppercase 
+  UPDATE info_v2 
+  SET product_name = UPPER(product_name); 
+  ``` </pre>
+
 
 # 🧠 Key Insights
 
