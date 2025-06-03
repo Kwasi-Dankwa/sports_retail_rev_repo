@@ -61,6 +61,21 @@ Link to Tableau Dashboard
 
 ### Price Comparison (Nike v Adidas)
 
+A Common Table Expression (CTE) named brand_price was used to calculate the average listing and sale prices for each brand by joining the brands_v2 and finance tables on product_id.
+An INNER JOIN was used to ensure that only products with complete financial and branding information (i.e., present in both tables) were included in the analysis. This prevents null values and ensures the accuracy of the aggregated price metrics.
+
+<pre><code>-
+  - Calculate the average sale price difference between Adidas and Nike 
+  WITH brand_price AS ( SELECT b.brand, AVG(f.listing_price) AS average_listing_price, 
+  AVG(f.sale_price) AS average_sale_price 
+  FROM brands_v2 b 
+  INNER JOIN finance f ON b.product_id = f.product_id 
+  WHERE b.brand IN ('Adidas', 'Nike') GROUP BY b.brand ) 
+  SELECT 
+  (SELECT average_sale_price FROM brand_price WHERE brand = 'Adidas') - (SELECT average_sale_price FROM brand_price WHERE brand = 'Nike') 
+  AS price_difference_adidas_nike; 
+</code></pre>
+
 #### Adidas
 * Adidas lists products at higher prices but sells at lower prices (approx. 34% discount).
 
@@ -77,6 +92,23 @@ Nike lists low but sells high, which could suggest:
 * Additionally, Nike products have no discounts attached to them.
 
 ### Product and Revenue Insights
+This query was used to categorize products into price tiers and provides a breakdown of how each brand performs in those tiers in terms of product count and total revenue. It's useful for price segmentation analysis and understanding how revenue is distributed across pricing strategies.
+<pre><code>-
+-- Assessing Price Ranges --
+SELECT b.brand, count(*) as num_of_products, sum(f.revenue) as total_revenue,
+CASE WHEN listing_price < 32 THEN 'Budget'
+     WHEN listing_price >= 32 AND listing_price < 74 THEN 'Average'
+     WHEN listing_price >= 74 AND listing_price < 129 THEN 'Expensive'
+     ELSE 'Luxury' END AS price_category
+FROM finance f
+INNER JOIN brands_v2 b
+ON f.product_id = b.product_id
+WHERE b.brand IS NOT NULL
+GROUP BY brand, price_category
+ORDER BY total_revenue DESC
+</code></pre>
+       
+
 * Adidas Dominates Revenue
 * Adidas has higher revenue across all price tiers (Average, Expensive, Luxury).
 * Most revenue is concentrated in the Average tier ($3.86M from 1,214 items).
@@ -96,6 +128,42 @@ Nike lists low but sells high, which could suggest:
 * That’s less than 10% of footwear revenue, despite a decent product count — possibly indicating lower average price or weaker consumer interest.
 
 ### Reviews and Revenue
+
+This code creates to CTEs and uses Pearsons Correlation Coefficient to find out the relationship between number of reviews and revenue
+<pre><code>-
+--using cte to calculate correlation-- 
+WITH CalcData AS (
+    SELECT
+        f.revenue,
+        r.reviews
+    FROM
+        finance f
+    INNER JOIN
+        reviews_v2 r ON f.product_id = r.product_id
+),
+-- using pearsons correlation coefficient formula to find correlation
+AggData AS (
+    SELECT
+        COUNT(revenue) AS N,
+        SUM(revenue) AS SumRevenue,
+        SUM(reviews) AS SumReviews,
+        SUM(revenue * reviews) AS SumRevenueReviews,
+        SUM(revenue * revenue) AS SumRevenueSq,
+        SUM(reviews * reviews) AS SumReviewsSq
+    FROM
+        CalcData
+)
+SELECT
+    (N * SumRevenueReviews - SumRevenue * SumReviews) /
+    SQRT(
+        (N * SumRevenueSq - SumRevenue * SumRevenue) *
+        (N * SumReviewsSq - SumReviews * SumReviews)
+    ) AS review_revenue_correlation
+FROM
+    AggData; 
+    </code></pre>
+
+
 There is a weak relationship between reviews and revenue (e.g., R² = 0.42) which means that customer review count only explains 42% of the variation in revenue. Additionally, Adidas products have had higher reviews than Nike products for a 2 year period(2018 - 2022)
 Reasons for this could include:
 
